@@ -1,37 +1,44 @@
 # web-python
 
-Practice 1: in-memory data access layer for Entity, Query
-and Feedback. Records are tuples. Stage 2 adds RPC over
-TCP (little-endian header + XML body).
+Практика: слой доступа к данным (кортежи) и RPC по TCP.
 
-## Layout
+Таблицы: Entity, Query, Feedback. Запись в памяти — кортеж.
+RPC: little-endian шапка + тело XML, порт `localhost:8000`.
 
-- `src/` — application code
-- `run.sh` — start the REPL or the RPC server
-- `Makefile` — `make run` and `make server`
+## Структура
 
-## Requirements
+- `src/models.py` — CRUD таблиц
+- `src/view.py` — выборка запросов за 9 минут
+- `src/REPL.py` — меню и demo всех функций
+- `src/client.py` — RPC-клиент (`RpcClient`)
+- `src/server.py` — RPC-сервер (`socketserver`)
+- `run.sh` — запуск REPL или сервера
+- `Makefile` — те же цели
+
+## Зависимости
 
 - Python 3.10+
-- [Scapy](https://scapy.net/) (`pip install scapy`)
+- Scapy: `pip install scapy`
 
-## Run
+## Запуск
 
-Start the server, then the REPL in another terminal:
+Сервер (терминал 1):
 
 ```bash
 ./run.sh server
+```
+
+или `make server`.
+
+REPL (терминал 2):
+
+```bash
 ./run.sh
 ```
 
-or
+или `make run`.
 
-```bash
-make server
-make run
-```
+В меню: `14` или `demo` — прогон всех функций модели.
 
-In the menu: `14` or `demo` runs all functions.
-
-RPC listens on `localhost:8000`. Client requests are
-appended to `journal.log`.
+Сервер слушает `localhost:8000`. Запросы клиента пишутся
+в `journal.log`.

@@ -16,7 +16,11 @@ NINE_MINUTES = 9 * 60
 
 def recent_query_feedbacks() -> list[tuple[str, str, str]]:
     now = time.time()
-    recent_queries = [q for q in get_queries() if q[Q_DATETIME] > now - NINE_MINUTES]
+    recent_queries = [
+        q
+        for q in get_queries()
+        if q[Q_DATETIME] > now - NINE_MINUTES
+    ]
     return [
         (f[F_RESPONSE], q[Q_DESCRIPTION], q[Q_TAGS])
         for q in recent_queries

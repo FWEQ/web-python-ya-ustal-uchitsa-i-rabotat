@@ -17,9 +17,30 @@ from models import (
 from view import recent_query_feedbacks
 
 
-ENTITY_HEADER = ("identifier", "datetime", "ip", "locale", "platform")
-QUERY_HEADER = ("identifier", "datetime", "parameter", "entity", "description", "tags", "status")
-FEEDBACK_HEADER = ("identifier", "datetime", "response", "status", "failure", "query")
+ENTITY_HEADER = (
+    "identifier",
+    "datetime",
+    "ip",
+    "locale",
+    "platform",
+)
+QUERY_HEADER = (
+    "identifier",
+    "datetime",
+    "parameter",
+    "entity",
+    "description",
+    "tags",
+    "status",
+)
+FEEDBACK_HEADER = (
+    "identifier",
+    "datetime",
+    "response",
+    "status",
+    "failure",
+    "query",
+)
 VIEW_HEADER = ("response", "description", "tags")
 
 MENU = """
@@ -42,7 +63,11 @@ MENU = """
 """
 
 
-def _print_table(title: str, header: tuple[str, ...], rows: list[tuple]) -> None:
+def _print_table(
+    title: str,
+    header: tuple[str, ...],
+    rows: list[tuple],
+) -> None:
     print(f"\n{title} ({len(rows)})")
     print(" | ".join(header))
     print("-" * 80)
@@ -84,7 +109,11 @@ def show_feedbacks() -> None:
 
 
 def show_view() -> None:
-    _print_table("recent_query_feedbacks", VIEW_HEADER, recent_query_feedbacks())
+    _print_table(
+        "recent_query_feedbacks",
+        VIEW_HEADER,
+        recent_query_feedbacks(),
+    )
 
 
 def create_entity() -> None:
@@ -218,7 +247,13 @@ def demo() -> None:
     show_feedbacks()
 
     print("\n--- 6. снова feedback, затем каскад del_query ---")
-    new_feedback(identifier=3, response="временный", status="ok", failure="", query=3)
+    new_feedback(
+        identifier=3,
+        response="временный",
+        status="ok",
+        failure="",
+        query=3,
+    )
     del_query(3)
     show_queries()
     show_feedbacks()
@@ -232,7 +267,13 @@ def demo() -> None:
         tags="demo",
         status="ok",
     )
-    new_feedback(identifier=3, response="ещё ответ", status="ok", failure="", query=3)
+    new_feedback(
+        identifier=3,
+        response="ещё ответ",
+        status="ok",
+        failure="",
+        query=3,
+    )
     del_entity(3)
     show_entities()
     show_queries()

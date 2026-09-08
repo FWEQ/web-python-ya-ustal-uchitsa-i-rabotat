@@ -38,15 +38,51 @@ def _local_ip() -> str:
 
 
 def new_entity(*, identifier: int) -> None:
-    entities.append((identifier, dt.datetime.now().timestamp(), _local_ip(), lang, "Web"))
+    entities.append((
+        identifier,
+        dt.datetime.now().timestamp(),
+        _local_ip(),
+        lang,
+        "Web",
+    ))
 
 
-def new_query(*, identifier: int, parameter: str, entity: int, description: str, tags: str, status: str) -> None:
-    queries.append((identifier, dt.datetime.now().timestamp(), parameter, entity, description, tags, status))
+def new_query(
+    *,
+    identifier: int,
+    parameter: str,
+    entity: int,
+    description: str,
+    tags: str,
+    status: str,
+) -> None:
+    queries.append((
+        identifier,
+        dt.datetime.now().timestamp(),
+        parameter,
+        entity,
+        description,
+        tags,
+        status,
+    ))
 
 
-def new_feedback(*, identifier: int, response: str, status: str, failure: str, query: int) -> None:
-    feedbacks.append((identifier, dt.datetime.now().timestamp(), response, status, failure, query))
+def new_feedback(
+    *,
+    identifier: int,
+    response: str,
+    status: str,
+    failure: str,
+    query: int,
+) -> None:
+    feedbacks.append((
+        identifier,
+        dt.datetime.now().timestamp(),
+        response,
+        status,
+        failure,
+        query,
+    ))
 
 
 def del_feedback(identifier: int) -> None:
@@ -79,7 +115,14 @@ def get_entities() -> list[tuple]:
     return list(entities)
 
 
-def edit_entity(*, identifier: int, datetime: int | None = None, ip: str | None = None, locale: str | None = None, platform: str | None = None) -> None:
+def edit_entity(
+    *,
+    identifier: int,
+    datetime: int | None = None,
+    ip: str | None = None,
+    locale: str | None = None,
+    platform: str | None = None,
+) -> None:
     for i, (eid, dt, e_ip, e_locale, e_platform) in enumerate(entities):
         if eid == identifier:
             entities[i] = (
@@ -93,8 +136,25 @@ def edit_entity(*, identifier: int, datetime: int | None = None, ip: str | None 
     raise ValueError(f"Entity with identifier {identifier} not found")
 
 
-def edit_query(*, identifier: int, datetime: int | None = None, parameter: str | None = None, entity: int | None = None, description: str | None = None, tags: str | None = None, status: str | None = None) -> None:
-    for i, (qid, dt, q_parameter, q_entity, q_description, q_tags, q_status) in enumerate(queries):
+def edit_query(
+    *,
+    identifier: int,
+    datetime: int | None = None,
+    parameter: str | None = None,
+    entity: int | None = None,
+    description: str | None = None,
+    tags: str | None = None,
+    status: str | None = None,
+) -> None:
+    for i, (
+        qid,
+        dt,
+        q_parameter,
+        q_entity,
+        q_description,
+        q_tags,
+        q_status,
+    ) in enumerate(queries):
         if qid == identifier:
             queries[i] = (
                 qid,
@@ -109,8 +169,23 @@ def edit_query(*, identifier: int, datetime: int | None = None, parameter: str |
     raise ValueError(f"Query with identifier {identifier} not found")
 
 
-def edit_feedback(*, identifier: int, datetime: int | None = None, response: str | None = None, status: str | None = None, failure: str | None = None, query: int | None = None) -> None:
-    for i, (fid, dt, f_response, f_status, f_failure, f_query) in enumerate(feedbacks):
+def edit_feedback(
+    *,
+    identifier: int,
+    datetime: int | None = None,
+    response: str | None = None,
+    status: str | None = None,
+    failure: str | None = None,
+    query: int | None = None,
+) -> None:
+    for i, (
+        fid,
+        dt,
+        f_response,
+        f_status,
+        f_failure,
+        f_query,
+    ) in enumerate(feedbacks):
         if fid == identifier:
             feedbacks[i] = (
                 fid,

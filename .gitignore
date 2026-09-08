@@ -26,3 +26,4 @@ htmlcov/
 *.o
 *.a
 *.out
+journal.log

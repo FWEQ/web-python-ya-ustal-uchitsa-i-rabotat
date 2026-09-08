@@ -3,7 +3,7 @@
 Практика: слой доступа к данным (кортежи) и RPC по TCP.
 
 Таблицы: Entity, Query, Feedback. Запись в памяти — кортеж.
-RPC: little-endian шапка + тело XML, порт `localhost:8000`.
+RPC: little-endian шапка + тело XML, порт `localhost:8001`.
 
 ## Структура
 
@@ -12,7 +12,7 @@ RPC: little-endian шапка + тело XML, порт `localhost:8000`.
 - `src/REPL.py` — меню и demo всех функций
 - `src/client.py` — RPC-клиент (`RpcClient`)
 - `src/server.py` — RPC-сервер (`socketserver`)
-- `run.sh` — запуск REPL или сервера
+- `run.sh` — repl, server или rpc
 - `Makefile` — те же цели
 
 ## Зависимости
@@ -30,15 +30,17 @@ RPC: little-endian шапка + тело XML, порт `localhost:8000`.
 
 или `make server`.
 
-REPL (терминал 2):
+RPC-клиент + то же меню (терминал 2):
 
 ```bash
-./run.sh
+./run.sh rpc
 ```
 
-или `make run`.
+или `make rpc`.
+
+Локальный REPL без сокета: `./run.sh` или `make run`.
 
 В меню: `14` или `demo` — прогон всех функций модели.
 
-Сервер слушает `localhost:8000`. Запросы клиента пишутся
+Сервер слушает `localhost:8001`. Запросы клиента пишутся
 в `journal.log`.

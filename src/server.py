@@ -6,7 +6,7 @@ import xml.etree.ElementTree as et
 import models
 
 HOST = "localhost"
-PORT = 8000
+PORT = 8001
 
 OP_GET_ENTITIES = 1
 OP_GET_QUERIES = 2

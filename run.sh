@@ -4,9 +4,10 @@ cd "$(dirname "$0")"
 export PYTHONPATH=src
 
 usage() {
-	echo "usage: $0 [repl|server]"
-	echo "  repl    interactive menu (default)"
-	echo "  server  RPC server on localhost:8000"
+	echo "usage: $0 [repl|server|rpc]"
+	echo "  repl    local menu (default)"
+	echo "  server  RPC server"
+	echo "  rpc     REPL through RpcClient"
 }
 
 case "${1:-repl}" in
@@ -15,6 +16,9 @@ case "${1:-repl}" in
 		;;
 	server)
 		exec python3 -m server
+		;;
+	rpc|client)
+		exec python3 -m REPL rpc
 		;;
 	-h|--help|help)
 		usage

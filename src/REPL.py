@@ -322,4 +322,21 @@ def repl() -> None:
 
 
 if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "rpc":
+        from client import RpcClient
+        rpc = RpcClient()
+        print(f"connected to {rpc.host}:{rpc.port}")
+        get_entities = rpc.get_entities
+        get_queries = rpc.get_queries
+        get_feedbacks = rpc.get_feedbacks
+        new_entity = rpc.new_entity
+        new_query = rpc.new_query
+        new_feedback = rpc.new_feedback
+        edit_entity = rpc.edit_entity
+        edit_query = rpc.edit_query
+        edit_feedback = rpc.edit_feedback
+        del_entity = rpc.del_entity
+        del_query = rpc.del_query
+        del_feedback = rpc.del_feedback
     repl()

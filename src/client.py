@@ -1,10 +1,10 @@
 import socket
-import logging 
+import logging
 import struct
 import xml.etree.ElementTree as et
 
 HOST = "localhost"
-PORT = 8000
+PORT = 8001
 
 OP_GET_ENTITIES = 1
 OP_GET_QUERIES = 2
@@ -20,12 +20,13 @@ OP_DEL_QUERY = 11
 OP_DEL_FEEDBACK = 12
 
 logging.basicConfig(
-    filename = "journal.log",
-    filemode = "a",
-    encoding = "utf-8",
-    level = logging.INFO,
-    format = "%(asctime)s opcode=%(opcode)s size=%(size)s xml=%(xml)s"
+    filename="journal.log",
+    filemode="a",
+    encoding="utf-8",
+    level=logging.INFO,
+    format="%(asctime)s opcode=%(opcode)s size=%(size)s xml=%(xml)s",
 )
+
 
 def recv_exact(sock: socket.socket, n: int) -> bytes:
     buff = b""
@@ -36,9 +37,12 @@ def recv_exact(sock: socket.socket, n: int) -> bytes:
         buff += chunk
     return buff
 
+
 class RpcClient:
     def __init__(self, host: str = HOST, port: int = PORT) -> None:
         self.sock = socket.create_connection((host, port))
+        self.host = host
+        self.port = port
 
     def close(self) -> None:
         self.sock.shutdown(socket.SHUT_RDWR)
@@ -46,8 +50,10 @@ class RpcClient:
 
     def _call(self, opcode: int, xml: str = "") -> str:
         body = xml.encode("utf-8") if xml else b""
-        logging.info("RPC request", 
-        extra={"opcode": opcode, "size": len(body), "xml": xml})
+        logging.info(
+            "RPC request",
+            extra={"opcode": opcode, "size": len(body), "xml": xml},
+        )
         self.sock.sendall(struct.pack("<IH", len(body), opcode) + body)
 
         resp_opcode, size = struct.unpack("<HI", recv_exact(self.sock, 6))
@@ -55,6 +61,7 @@ class RpcClient:
         if resp_opcode != opcode:
             raise ValueError("Opcode missmatch")
         return resp_xml
+
     def get_entities(self) -> list[tuple]:
         return _rows_from_xml(self._call(OP_GET_ENTITIES))
 
@@ -184,6 +191,7 @@ class RpcClient:
     def del_feedback(self, identifier: int) -> None:
         self._call(OP_DEL_FEEDBACK, _xml_from_fields(identifier=identifier))
 
+
 def _xml_from_fields(**fields) -> str:
     root = et.Element("body")
     for name, value in fields.items():
@@ -192,6 +200,7 @@ def _xml_from_fields(**fields) -> str:
         el = et.SubElement(root, name)
         el.text = str(value)
     return et.tostring(root, encoding="unicode")
+
 
 def _rows_from_xml(xml: str) -> list[tuple]:
     if not xml:
@@ -205,4 +214,3 @@ def _rows_from_xml(xml: str) -> list[tuple]:
             values.append(int(text) if text.isdigit() else text)
         rows.append(tuple(values))
     return rows
-

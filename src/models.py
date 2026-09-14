@@ -3,6 +3,17 @@ import locale as lc
 import datetime as dt
 
 ID = 0
+QUERY_ENTITY = 3
+FEEDBACK_QUERY = 5
+QUERY_COLS = (
+    "identifier",
+    "datetime",
+    "parameter",
+    "entity",
+    "description",
+    "tags",
+    "status",
+)
 
 lang, _ = lc.getlocale()
 if not lang:
@@ -91,14 +102,14 @@ def del_feedback(identifier: int) -> None:
 
 def del_query(identifier: int) -> None:
     for row in list(feedbacks):
-        if row[5] == identifier:  # query
+        if row[FEEDBACK_QUERY] == identifier:
             del_feedback(row[ID])
     queries[:] = [row for row in queries if row[ID] != identifier]
 
 
 def del_entity(identifier: int) -> None:
     for row in list(queries):
-        if row[3] == identifier:  # entity
+        if row[QUERY_ENTITY] == identifier:
             del_query(row[ID])
     entities[:] = [row for row in entities if row[ID] != identifier]
 
@@ -136,35 +147,21 @@ def edit_entity(
     raise ValueError(f"Entity with identifier {identifier} not found")
 
 
-def edit_query(
-    *,
-    identifier: int,
-    datetime: int | None = None,
-    parameter: str | None = None,
-    entity: int | None = None,
-    description: str | None = None,
-    tags: str | None = None,
-    status: str | None = None,
-) -> None:
-    for i, (
-        qid,
-        dt,
-        q_parameter,
-        q_entity,
-        q_description,
-        q_tags,
-        q_status,
-    ) in enumerate(queries):
-        if qid == identifier:
-            queries[i] = (
-                qid,
-                dt if datetime is None else datetime,
-                q_parameter if parameter is None else parameter,
-                q_entity if entity is None else entity,
-                q_description if description is None else description,
-                q_tags if tags is None else tags,
-                q_status if status is None else status,
-            )
+def _updated(row: tuple, names: tuple[str, ...], fields: dict) -> tuple:
+    result = []
+    for index, name in enumerate(names):
+        value = fields.get(name)
+        if name == "identifier" or value is None:
+            result.append(row[index])
+        else:
+            result.append(value)
+    return tuple(result)
+
+
+def edit_query(identifier: int, **fields) -> None:
+    for i, row in enumerate(queries):
+        if row[ID] == identifier:
+            queries[i] = _updated(row, QUERY_COLS, fields)
             return
     raise ValueError(f"Query with identifier {identifier} not found")
 

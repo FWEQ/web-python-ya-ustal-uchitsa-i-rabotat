@@ -204,12 +204,14 @@ def remove_feedback() -> None:
     show_feedbacks()
 
 
-def demo() -> None:
+def _demo_read() -> None:
     print("\n--- 1. чтение таблиц ---")
     show_entities()
     show_queries()
     show_feedbacks()
 
+
+def _demo_create() -> None:
     print("\n--- 2. создание ---")
     new_entity(identifier=3)
     new_query(
@@ -231,6 +233,8 @@ def demo() -> None:
     show_queries()
     show_feedbacks()
 
+
+def _demo_edit() -> None:
     print("\n--- 3. редактирование ---")
     edit_entity(identifier=3, platform="Linux")
     edit_query(identifier=3, status="done")
@@ -239,13 +243,19 @@ def demo() -> None:
     show_queries()
     show_feedbacks()
 
+
+def _demo_view() -> None:
     print("\n--- 4. view: join запросов за 9 минут с feedback ---")
     show_view()
 
+
+def _demo_delete_feedback() -> None:
     print("\n--- 5. удаление feedback ---")
     del_feedback(3)
     show_feedbacks()
 
+
+def _demo_cascade_query() -> None:
     print("\n--- 6. снова feedback, затем каскад del_query ---")
     new_feedback(
         identifier=3,
@@ -258,6 +268,8 @@ def demo() -> None:
     show_queries()
     show_feedbacks()
 
+
+def _demo_cascade_entity() -> None:
     print("\n--- 7. снова query+feedback, затем каскад del_entity ---")
     new_query(
         identifier=3,
@@ -278,6 +290,16 @@ def demo() -> None:
     show_entities()
     show_queries()
     show_feedbacks()
+
+
+def demo() -> None:
+    _demo_read()
+    _demo_create()
+    _demo_edit()
+    _demo_view()
+    _demo_delete_feedback()
+    _demo_cascade_query()
+    _demo_cascade_entity()
     print("\nдемо завершено")
 
 
@@ -326,7 +348,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "rpc":
         from client import RpcClient
         rpc = RpcClient()
-        print(f"connected to {rpc.host}:{rpc.port}")
+        print("connected to {}:{}".format(rpc.host, rpc.port))
         get_entities = rpc.get_entities
         get_queries = rpc.get_queries
         get_feedbacks = rpc.get_feedbacks

@@ -74,27 +74,8 @@ class RpcClient:
     def new_entity(self, *, identifier: int) -> None:
         self._call(OP_NEW_ENTITY, _xml_from_fields(identifier=identifier))
 
-    def new_query(
-        self,
-        *,
-        identifier: int,
-        parameter: str,
-        entity: int,
-        description: str,
-        tags: str,
-        status: str,
-    ) -> None:
-        self._call(
-            OP_NEW_QUERY,
-            _xml_from_fields(
-                identifier=identifier,
-                parameter=parameter,
-                entity=entity,
-                description=description,
-                tags=tags,
-                status=status,
-            ),
-        )
+    def new_query(self, **fields) -> None:
+        self._call(OP_NEW_QUERY, _xml_from_fields(**fields))
 
     def new_feedback(
         self,
@@ -136,51 +117,11 @@ class RpcClient:
             ),
         )
 
-    def edit_query(
-        self,
-        *,
-        identifier: int,
-        datetime: int | None = None,
-        parameter: str | None = None,
-        entity: int | None = None,
-        description: str | None = None,
-        tags: str | None = None,
-        status: str | None = None,
-    ) -> None:
-        self._call(
-            OP_EDIT_QUERY,
-            _xml_from_fields(
-                identifier=identifier,
-                datetime=datetime,
-                parameter=parameter,
-                entity=entity,
-                description=description,
-                tags=tags,
-                status=status,
-            ),
-        )
+    def edit_query(self, **fields) -> None:
+        self._call(OP_EDIT_QUERY, _xml_from_fields(**fields))
 
-    def edit_feedback(
-        self,
-        *,
-        identifier: int,
-        datetime: int | None = None,
-        response: str | None = None,
-        status: str | None = None,
-        failure: str | None = None,
-        query: int | None = None,
-    ) -> None:
-        self._call(
-            OP_EDIT_FEEDBACK,
-            _xml_from_fields(
-                identifier=identifier,
-                datetime=datetime,
-                response=response,
-                status=status,
-                failure=failure,
-                query=query,
-            ),
-        )
+    def edit_feedback(self, **fields) -> None:
+        self._call(OP_EDIT_FEEDBACK, _xml_from_fields(**fields))
 
     def del_entity(self, identifier: int) -> None:
         self._call(OP_DEL_ENTITY, _xml_from_fields(identifier=identifier))

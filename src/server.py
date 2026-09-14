@@ -76,42 +76,51 @@ def rows_to_xml(rows: list[tuple], field_names: tuple[str, ...]) -> str:
     return et.tostring(root, encoding="unicode")
 
 
+def _rows(loader, names: tuple[str, ...]):
+    def handler(_fields: dict) -> str:
+        return rows_to_xml(loader(), names)
+
+    return handler
+
+
+def _mutate(func):
+    def handler(fields: dict) -> str:
+        func(**fields)
+        return ""
+
+    return handler
+
+
+def _delete(func):
+    def handler(fields: dict) -> str:
+        func(fields["identifier"])
+        return ""
+
+    return handler
+
+
+OP_HANDLERS = {
+    OP_GET_ENTITIES: _rows(models.get_entities, ENTITY_FIELDS),
+    OP_GET_QUERIES: _rows(models.get_queries, QUERY_FIELDS),
+    OP_GET_FEEDBACKS: _rows(models.get_feedbacks, FEEDBACK_FIELDS),
+    OP_NEW_ENTITY: _mutate(models.new_entity),
+    OP_NEW_QUERY: _mutate(models.new_query),
+    OP_NEW_FEEDBACK: _mutate(models.new_feedback),
+    OP_EDIT_ENTITY: _mutate(models.edit_entity),
+    OP_EDIT_QUERY: _mutate(models.edit_query),
+    OP_EDIT_FEEDBACK: _mutate(models.edit_feedback),
+    OP_DEL_ENTITY: _delete(models.del_entity),
+    OP_DEL_QUERY: _delete(models.del_query),
+    OP_DEL_FEEDBACK: _delete(models.del_feedback),
+}
+
+
 def dispatch(opcode: int, xml: str) -> str:
     fields = fields_from_xml(xml)
-    if opcode == OP_GET_ENTITIES:
-        return rows_to_xml(models.get_entities(), ENTITY_FIELDS)
-    if opcode == OP_GET_QUERIES:
-        return rows_to_xml(models.get_queries(), QUERY_FIELDS)
-    if opcode == OP_GET_FEEDBACKS:
-        return rows_to_xml(models.get_feedbacks(), FEEDBACK_FIELDS)
-    if opcode == OP_NEW_ENTITY:
-        models.new_entity(**fields)
-        return ""
-    if opcode == OP_NEW_QUERY:
-        models.new_query(**fields)
-        return ""
-    if opcode == OP_NEW_FEEDBACK:
-        models.new_feedback(**fields)
-        return ""
-    if opcode == OP_EDIT_ENTITY:
-        models.edit_entity(**fields)
-        return ""
-    if opcode == OP_EDIT_QUERY:
-        models.edit_query(**fields)
-        return ""
-    if opcode == OP_EDIT_FEEDBACK:
-        models.edit_feedback(**fields)
-        return ""
-    if opcode == OP_DEL_ENTITY:
-        models.del_entity(fields["identifier"])
-        return ""
-    if opcode == OP_DEL_QUERY:
-        models.del_query(fields["identifier"])
-        return ""
-    if opcode == OP_DEL_FEEDBACK:
-        models.del_feedback(fields["identifier"])
-        return ""
-    raise ValueError(f"Unknown opcode {opcode}")
+    handler = OP_HANDLERS.get(opcode)
+    if handler is None:
+        raise ValueError(f"Unknown opcode {opcode}")
+    return handler(fields)
 
 
 class RpcHandler(socketserver.BaseRequestHandler):
@@ -141,5 +150,5 @@ class RpcServer(socketserver.ThreadingTCPServer):
 
 if __name__ == "__main__":
     with RpcServer((HOST, PORT), RpcHandler) as server:
-        print(f"RPC server on {HOST}:{PORT}")
+        print("RPC server on {}:{}".format(HOST, PORT))
         server.serve_forever()

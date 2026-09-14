@@ -18,6 +18,7 @@ OP_EDIT_FEEDBACK = 9
 OP_DEL_ENTITY = 10
 OP_DEL_QUERY = 11
 OP_DEL_FEEDBACK = 12
+OP_RECENT_VIEW = 13
 
 logging.basicConfig(
     filename="journal.log",
@@ -70,6 +71,9 @@ class RpcClient:
 
     def get_feedbacks(self) -> list[tuple]:
         return _rows_from_xml(self._call(OP_GET_FEEDBACKS))
+
+    def recent_query_feedbacks(self) -> list[tuple]:
+        return _rows_from_xml(self._call(OP_RECENT_VIEW))
 
     def new_entity(self, *, identifier: int) -> None:
         self._call(OP_NEW_ENTITY, _xml_from_fields(identifier=identifier))

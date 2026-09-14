@@ -4,6 +4,7 @@ import struct
 import xml.etree.ElementTree as et
 
 import models
+import view
 
 HOST = "localhost"
 PORT = 8001
@@ -20,6 +21,7 @@ OP_EDIT_FEEDBACK = 9
 OP_DEL_ENTITY = 10
 OP_DEL_QUERY = 11
 OP_DEL_FEEDBACK = 12
+OP_RECENT_VIEW = 13
 
 ENTITY_FIELDS = ("identifier", "datetime", "ip", "locale", "platform")
 QUERY_FIELDS = (
@@ -39,6 +41,7 @@ FEEDBACK_FIELDS = (
     "failure",
     "query",
 )
+VIEW_FIELDS = ("response", "description", "tags")
 INT_FIELDS = {"identifier", "datetime", "entity", "query"}
 
 
@@ -112,6 +115,7 @@ OP_HANDLERS = {
     OP_DEL_ENTITY: _delete(models.del_entity),
     OP_DEL_QUERY: _delete(models.del_query),
     OP_DEL_FEEDBACK: _delete(models.del_feedback),
+    OP_RECENT_VIEW: _rows(view.recent_query_feedbacks, VIEW_FIELDS),
 }
 
 

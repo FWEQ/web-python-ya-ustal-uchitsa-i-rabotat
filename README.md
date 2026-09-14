@@ -19,6 +19,18 @@ RPC: little-endian шапка + тело XML, порт `localhost:8001`.
 
 - Python 3.10+
 - Scapy: `pip install scapy`
+- Hypothesis и coverage: `pip install hypothesis coverage`
+
+## Тесты
+
+MBT через `RuleBasedStateMachine`: клиент RPC и упрощённая
+модель таблиц получают одни и те же 13 операций.
+
+```bash
+make test
+```
+
+Отчёт о покрытии ветвей пишется в `coverage.txt`.
 
 ## Запуск
 

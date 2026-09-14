@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = src
+omit = src/REPL.py
+
+[report]
+show_missing = True
+skip_covered = False
+precision = 1

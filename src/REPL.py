@@ -361,4 +361,5 @@ if __name__ == "__main__":
         del_entity = rpc.del_entity
         del_query = rpc.del_query
         del_feedback = rpc.del_feedback
+        recent_query_feedbacks = rpc.recent_query_feedbacks
     repl()

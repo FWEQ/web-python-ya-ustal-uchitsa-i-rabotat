@@ -16,6 +16,7 @@ _SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(_SRC))
 
 import models
+import view
 from client import RpcClient, _rows_from_xml
 from server import (
     ENTITY_FIELDS,
@@ -26,7 +27,6 @@ from server import (
     RpcServer,
     rows_to_xml,
 )
-from view import NINE_MINUTES
 
 SEED_ENTITIES = [tuple(row) for row in models.entities]
 SEED_QUERIES = [tuple(row) for row in models.queries]
@@ -78,104 +78,10 @@ def pick_id(data, table: list[tuple]):
     return data.draw(IDS)
 
 
-def last_row(table: list[tuple], identifier: int) -> tuple:
-    return [row for row in table if row[0] == identifier][-1]
-
-
-def patch_row(row: tuple, names: tuple[str, ...], fields: dict) -> tuple:
-    values = list(row)
-    for index, name in enumerate(names):
-        if name == "identifier":
-            continue
-        if name in fields and fields[name] is not None:
-            values[index] = fields[name]
-    return tuple(values)
-
-
-def replace_row(
-    table: list[tuple],
-    identifier: int,
-    names: tuple[str, ...],
-    fields: dict,
-) -> list[tuple]:
-    result = []
-    patched = False
-    for row in table:
-        if row[0] == identifier and not patched:
-            result.append(patch_row(row, names, fields))
-            patched = True
-        else:
-            result.append(row)
-    return result
-
-
-class Mirror:
-    def __init__(self) -> None:
-        self.entities = [tuple(row) for row in SEED_ENTITIES]
-        self.queries = [tuple(row) for row in SEED_QUERIES]
-        self.feedbacks = [tuple(row) for row in SEED_FEEDBACKS]
-
-    def capture_entity(self, identifier: int) -> None:
-        self.entities.append(last_row(models.get_entities(), identifier))
-
-    def capture_query(self, identifier: int) -> None:
-        self.queries.append(last_row(models.get_queries(), identifier))
-
-    def capture_feedback(self, identifier: int) -> None:
-        self.feedbacks.append(last_row(models.get_feedbacks(), identifier))
-
-    def edit_entity(self, identifier: int, **fields) -> None:
-        self.entities = replace_row(
-            self.entities, identifier, ENTITY_FIELDS, fields
-        )
-
-    def edit_query(self, identifier: int, **fields) -> None:
-        self.queries = replace_row(
-            self.queries, identifier, QUERY_FIELDS, fields
-        )
-
-    def edit_feedback(self, identifier: int, **fields) -> None:
-        self.feedbacks = replace_row(
-            self.feedbacks, identifier, FEEDBACK_FIELDS, fields
-        )
-
-    def del_feedback(self, identifier: int) -> None:
-        self.feedbacks = [
-            row for row in self.feedbacks if row[0] != identifier
-        ]
-
-    def del_query(self, identifier: int) -> None:
-        for row in list(self.feedbacks):
-            if row[5] == identifier:
-                self.del_feedback(row[0])
-        self.queries = [
-            row for row in self.queries if row[0] != identifier
-        ]
-
-    def del_entity(self, identifier: int) -> None:
-        for row in list(self.queries):
-            if row[3] == identifier:
-                self.del_query(row[0])
-        self.entities = [
-            row for row in self.entities if row[0] != identifier
-        ]
-
-    def recent_query_feedbacks(self) -> list[tuple]:
-        now = time.time()
-        recent = [q for q in self.queries if q[1] > now - NINE_MINUTES]
-        rows = []
-        for query in recent:
-            for feedback in self.feedbacks:
-                if query[0] == feedback[5]:
-                    rows.append((feedback[2], query[4], query[5]))
-        return rows
-
-
 class RpcMachine(RuleBasedStateMachine):
     @initialize()
     def start(self) -> None:
         reset_tables()
-        self.model = Mirror()
         self.server, self.thread, self.rpc = start_rpc()
 
     def teardown(self) -> None:
@@ -183,32 +89,32 @@ class RpcMachine(RuleBasedStateMachine):
             stop_rpc(self.server, self.thread, self.rpc)
         reset_tables()
 
-    def check(self, rpc_rows, model_rows, names) -> None:
-        assert rpc_rows == encoded(model_rows, names)
+    def check(self, rpc_rows, loader, names) -> None:
+        assert rpc_rows == encoded(loader(), names)
 
     @invariant()
     def tables_match(self) -> None:
-        self.check(self.rpc.get_entities(), self.model.entities, ENTITY_FIELDS)
-        self.check(self.rpc.get_queries(), self.model.queries, QUERY_FIELDS)
+        self.check(self.rpc.get_entities(), models.get_entities, ENTITY_FIELDS)
+        self.check(self.rpc.get_queries(), models.get_queries, QUERY_FIELDS)
         self.check(
             self.rpc.get_feedbacks(),
-            self.model.feedbacks,
+            models.get_feedbacks,
             FEEDBACK_FIELDS,
         )
 
     @rule()
     def get_entities(self) -> None:
-        self.check(self.rpc.get_entities(), self.model.entities, ENTITY_FIELDS)
+        self.check(self.rpc.get_entities(), models.get_entities, ENTITY_FIELDS)
 
     @rule()
     def get_queries(self) -> None:
-        self.check(self.rpc.get_queries(), self.model.queries, QUERY_FIELDS)
+        self.check(self.rpc.get_queries(), models.get_queries, QUERY_FIELDS)
 
     @rule()
     def get_feedbacks(self) -> None:
         self.check(
             self.rpc.get_feedbacks(),
-            self.model.feedbacks,
+            models.get_feedbacks,
             FEEDBACK_FIELDS,
         )
 
@@ -216,117 +122,71 @@ class RpcMachine(RuleBasedStateMachine):
     def recent_query_feedbacks(self) -> None:
         self.check(
             self.rpc.recent_query_feedbacks(),
-            self.model.recent_query_feedbacks(),
+            view.recent_query_feedbacks,
             VIEW_FIELDS,
         )
 
     @rule(identifier=IDS)
     def new_entity(self, identifier: int) -> None:
         self.rpc.new_entity(identifier=identifier)
-        self.model.capture_entity(identifier)
 
     @rule(data=st.data())
     def new_query(self, data) -> None:
-        identifier = data.draw(IDS)
-        entity = pick_id(data, self.model.entities)
-        parameter = data.draw(WORDS)
-        description = data.draw(WORDS)
-        tags = data.draw(WORDS)
-        status = data.draw(WORDS)
         self.rpc.new_query(
-            identifier=identifier,
-            parameter=parameter,
-            entity=entity,
-            description=description,
-            tags=tags,
-            status=status,
+            identifier=data.draw(IDS),
+            parameter=data.draw(WORDS),
+            entity=pick_id(data, models.entities),
+            description=data.draw(WORDS),
+            tags=data.draw(WORDS),
+            status=data.draw(WORDS),
         )
-        self.model.capture_query(identifier)
 
     @rule(data=st.data())
     def new_feedback(self, data) -> None:
-        identifier = data.draw(IDS)
-        query = pick_id(data, self.model.queries)
-        response = data.draw(WORDS)
-        status = data.draw(WORDS)
-        failure = data.draw(WORDS)
         self.rpc.new_feedback(
-            identifier=identifier,
-            response=response,
-            status=status,
-            failure=failure,
-            query=query,
+            identifier=data.draw(IDS),
+            response=data.draw(WORDS),
+            status=data.draw(WORDS),
+            failure=data.draw(WORDS),
+            query=pick_id(data, models.queries),
         )
-        self.model.capture_feedback(identifier)
 
     @rule(data=st.data())
     def edit_entity(self, data) -> None:
-        identifier = pick_id(data, self.model.entities)
-        platform = data.draw(WORDS)
-        locale = data.draw(WORDS)
-        ip = data.draw(WORDS)
         self.rpc.edit_entity(
-            identifier=identifier,
-            ip=ip,
-            locale=locale,
-            platform=platform,
-        )
-        self.model.edit_entity(
-            identifier,
-            ip=ip,
-            locale=locale,
-            platform=platform,
+            identifier=pick_id(data, models.entities),
+            ip=data.draw(WORDS),
+            locale=data.draw(WORDS),
+            platform=data.draw(WORDS),
         )
 
     @rule(data=st.data())
     def edit_query(self, data) -> None:
-        identifier = pick_id(data, self.model.queries)
-        status = data.draw(WORDS)
-        parameter = data.draw(WORDS)
         self.rpc.edit_query(
-            identifier=identifier,
-            status=status,
-            parameter=parameter,
-        )
-        self.model.edit_query(
-            identifier,
-            status=status,
-            parameter=parameter,
+            identifier=pick_id(data, models.queries),
+            status=data.draw(WORDS),
+            parameter=data.draw(WORDS),
         )
 
     @rule(data=st.data())
     def edit_feedback(self, data) -> None:
-        identifier = pick_id(data, self.model.feedbacks)
-        response = data.draw(WORDS)
-        status = data.draw(WORDS)
         self.rpc.edit_feedback(
-            identifier=identifier,
-            response=response,
-            status=status,
-        )
-        self.model.edit_feedback(
-            identifier,
-            response=response,
-            status=status,
+            identifier=pick_id(data, models.feedbacks),
+            response=data.draw(WORDS),
+            status=data.draw(WORDS),
         )
 
     @rule(data=st.data())
     def del_entity(self, data) -> None:
-        identifier = pick_id(data, self.model.entities)
-        self.rpc.del_entity(identifier)
-        self.model.del_entity(identifier)
+        self.rpc.del_entity(pick_id(data, models.entities))
 
     @rule(data=st.data())
     def del_query(self, data) -> None:
-        identifier = pick_id(data, self.model.queries)
-        self.rpc.del_query(identifier)
-        self.model.del_query(identifier)
+        self.rpc.del_query(pick_id(data, models.queries))
 
     @rule(data=st.data())
     def del_feedback(self, data) -> None:
-        identifier = pick_id(data, self.model.feedbacks)
-        self.rpc.del_feedback(identifier)
-        self.model.del_feedback(identifier)
+        self.rpc.del_feedback(pick_id(data, models.feedbacks))
 
 
 RpcMachine.TestCase.settings = settings(

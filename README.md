@@ -23,8 +23,8 @@ RPC: little-endian шапка + тело XML, порт `localhost:8001`.
 
 ## Тесты
 
-MBT через `RuleBasedStateMachine`: клиент RPC и упрощённая
-модель таблиц получают одни и те же 13 операций.
+MBT через `RuleBasedStateMachine`: 13 RPC-методов сверяются
+с `models` / `view` после каждого шага.
 
 ```bash
 make test
